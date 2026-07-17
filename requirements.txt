@@ -1,0 +1,11 @@
+# AI類似図面検索 PoC 依存パッケージ
+# インストール: pip install -r requirements.txt
+# ※ GPUを使う場合は PyTorch公式サイトの手順でCUDA版torchを先に入れる
+
+opencv-python-headless>=4.9
+pymupdf>=1.24
+numpy>=1.26
+torch>=2.2
+torchvision>=0.17
+qdrant-client>=1.10  # query_points API を使用するため
+streamlit>=1.35

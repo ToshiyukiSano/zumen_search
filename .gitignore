@@ -1,0 +1,9 @@
+# ベクトルDBのローカルデータ(再生成可能・図面情報を含むため公開しない)
+qdrant_data/
+
+# Python
+__pycache__/
+*.pyc
+
+# 動作確認の出力
+preprocessed_sample.png
