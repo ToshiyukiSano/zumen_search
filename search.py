@@ -3,7 +3,7 @@ search.py - 類似図面検索CLI
 
 使い方:
     python search.py 検索したい図面.pdf
-    python search.py 検索したい図面.pdf --top 10 --material SPCC
+    python search.py 検索したい図面.dxf --top 10 --material SPCC
 """
 
 from __future__ import annotations

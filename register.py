@@ -4,8 +4,9 @@ register.py - 図面フォルダの一括登録CLI
 使い方:
     python register.py ./drawings_folder
 
-指定フォルダ内の PDF/TIFF/PNG/JPG を再帰的に探し、
+指定フォルダ内の PDF/TIFF/PNG/JPG/DXF を再帰的に探し、
 前処理 → ベクトル化 → ベクトルDB登録 を一括実行する。
+DXFはテキスト抽出も自動で行い、抽出文字列を payload に保存する。
 
 付帯情報(材質・板厚など)をCSVで持っている場合は --meta を指定:
     python register.py ./drawings_folder --meta metadata.csv
@@ -26,7 +27,7 @@ from embedder import DrawingEmbedder
 from indexer import DrawingIndex
 from preprocess import preprocess_for_embedding
 
-SUPPORTED = {".pdf", ".tif", ".tiff", ".png", ".jpg", ".jpeg"}
+SUPPORTED = {".pdf", ".tif", ".tiff", ".png", ".jpg", ".jpeg", ".dxf"}
 
 
 def load_metadata(csv_path: str | None) -> dict[str, dict]:
@@ -65,7 +66,15 @@ def main() -> None:
         try:
             bw = preprocess_for_embedding(path)
             vec = embedder.embed(bw)
-            index.add(path, vec, metadata.get(path.name))
+            meta = dict(metadata.get(path.name, {}))
+            # DXFなら図面内テキストも保存(品番・材質の手がかりになる)
+            if path.suffix.lower() == ".dxf":
+                from dxf_loader import extract_dxf_text
+
+                texts = extract_dxf_text(path, max_items=30)
+                if texts:
+                    meta.setdefault("dxf_text", " / ".join(texts))
+            index.add(path, vec, meta or None)
             ok += 1
             print(f"[{i}/{len(files)}] 登録OK: {path.name}")
         except Exception as e:  # 1枚の失敗で全体を止めない

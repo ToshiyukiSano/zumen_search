@@ -39,7 +39,7 @@ col_l, col_r = st.columns([1, 2])
 
 with col_l:
     uploaded = st.file_uploader(
-        "検索したい図面をアップロード", type=["pdf", "tif", "tiff", "png", "jpg", "jpeg"]
+        "検索したい図面をアップロード", type=["pdf", "tif", "tiff", "png", "jpg", "jpeg", "dxf"]
     )
     top_k = st.slider("表示件数", 5, 30, 10)
     material = st.text_input("材質で絞り込み (任意)", placeholder="例: SPCC")

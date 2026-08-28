@@ -9,3 +9,5 @@ torch>=2.2
 torchvision>=0.17
 qdrant-client>=1.10  # query_points API を使用するため
 streamlit>=1.35
+ezdxf>=1.3           # DXF読み込み
+matplotlib>=3.8      # DXFレンダリング

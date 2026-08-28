@@ -1,12 +1,13 @@
 """
 preprocess.py - 図面の前処理モジュール
 
-PDF/TIFF/画像ファイルを読み込み、類似検索に適した画像に変換する。
+PDF/TIFF/画像/DXFファイルを読み込み、類似検索に適した画像に変換する。
 処理内容:
-  1. PDFの画像化 (PyMuPDF, 300dpi相当)
+  1. PDFの画像化 (PyMuPDF, 300dpi相当) / DXFのレンダリング (dxf_loader)
   2. グレースケール化・二値化 (大津の方法)
-  3. 傾き補正 (デスキュー)
-  4. 寸法線・細線の軽減 (モルフォロジー処理)
+  3. 傾き補正 (デスキュー) ※スキャン系のみ
+  4. 寸法線・細線の軽減 (モルフォロジー処理) ※スキャン系のみ
+     DXFは寸法・注記をエンティティ型で確実に除去済みのためスキップ
   5. 表題欄領域の切り出し (右下領域, AI-OCR用)
 """
 
@@ -33,6 +34,11 @@ def load_image(path: str | Path) -> np.ndarray:
     複数ページPDFを扱う場合は register.py 側でページ分割する。
     """
     path = Path(path)
+    if path.suffix.lower() == ".dxf":
+        # CADデータ: dxf_loaderで寸法・注記を除外してレンダリング
+        from dxf_loader import load_dxf_as_image
+
+        return load_dxf_as_image(path)
     if path.suffix.lower() == ".pdf":
         doc = fitz.open(path)
         page = doc[0]
@@ -126,12 +132,19 @@ def resize_keep_aspect(img: np.ndarray, max_side: int = MAX_SIDE) -> np.ndarray:
 
 
 def preprocess_for_embedding(path: str | Path, suppress_dims: bool = True) -> np.ndarray:
-    """埋め込み(ベクトル化)用の前処理を一括実行し、白背景の二値画像を返す。"""
+    """埋め込み(ベクトル化)用の前処理を一括実行し、白背景の二値画像を返す。
+
+    DXFはレンダリング時点で寸法・注記が除去済みかつ傾きゼロのため、
+    デスキューと細線除去はスキップする(細線除去をかけると
+    レンダリングされた細い外形線まで消えてしまう)。
+    """
+    is_dxf = Path(path).suffix.lower() == ".dxf"
     gray = load_image(path)
     bw = binarize(gray)
-    bw = deskew(bw)
-    if suppress_dims:
-        bw = suppress_thin_lines(bw)
+    if not is_dxf:
+        bw = deskew(bw)
+        if suppress_dims:
+            bw = suppress_thin_lines(bw)
     bw = resize_keep_aspect(bw)
     return bw
 
